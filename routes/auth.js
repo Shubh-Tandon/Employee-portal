@@ -35,11 +35,12 @@ router.post('/create', [
     try {
         let employee = await Employee.findOne({ email: req.body.email });
         if (employee) {
-            return res.status(400).json({ success, error: employeeExistValidation})
+            return res.status(409).json({ success, error: employeeExistValidation})
         }
 
         const salt = await bcrypt.genSalt(10);
         const securedPassword = await bcrypt.hash(req.body.password, salt);
+
 
         // create a new user
         employee = await Employee.create({
@@ -65,7 +66,7 @@ router.post('/create', [
         //generate token
         const authtoken = jwt.sign(data, JWT_SECRET);
         success = true;
-        res.json({ success, authtoken })
+        res.status(201).json({ success, authtoken })
 
     } catch (error) {
         console.error(error.message);
@@ -98,7 +99,7 @@ router.post('/login', [
         const passwordCompare = await bcrypt.compare(password, employee.password);
         if (!passwordCompare) {
             success = false;
-            return res.status(400).json({ success, error: loginCredentialsValidation});
+            return res.status(401).json({ success, error: loginCredentialsValidation});
         }
 
         const data = {
