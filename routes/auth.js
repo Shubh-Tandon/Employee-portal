@@ -10,8 +10,13 @@ const rateLimit = require('express-rate-limit');
 
 const limiter = require('../middleware/security features/rateLimiting');
 
+const sanitizeInput = [
+    body('name').trim().escape(),
+    body('email').trim().escape(),
+    body('password').trim().escape(),
+    // Add sanitization rules for other fields as needed
+  ];
 
-// const {internalServerError , notAllowedError} from '.'
 
 dotenv.config({ path: '../config.env' });
 
@@ -22,65 +27,65 @@ const router = express.Router();
 
 //Route 1:  create an employee/admin using: POST "/auth/create", Require Auth --- Login required
 
-router.post('/create',limiter, [
-    body('name', nameValidation).isLength({ min: 3 }),
-    body('email', emailValidation).isEmail(),
-    body('password', passwordValidation).isLength({ min: 5 }),
-],fetchemployee ,async (req, res) => {
-    let success = false;
+    router.post('/create',limiter,sanitizeInput, [
+        body('name', nameValidation).isLength({ min: 3 }),
+        body('email', emailValidation).isEmail(),
+        body('password', passwordValidation).isLength({ min: 5 }),
+    ],fetchemployee ,async (req, res) => {
+        let success = false;
 
-    // If there are errors, return bad request and the errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ success, errors: errors.array() });
-    }
-    // check whether the user with this email exist already
-    try {
-        let employee = await Employee.findOne({ email: req.body.email });
-        if (employee) {
-            return res.status(409).json({ success, error: employeeExistValidation})
+        // If there are errors, return bad request and the errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success, errors: errors.array() });
         }
-
-        const salt = await bcrypt.genSalt(10);
-        const securedPassword = await bcrypt.hash(req.body.password, salt);
-
-
-        // create a new user
-        employee = await Employee.create({
-            name: req.body.name,
-            email: req.body.email,
-            password: securedPassword,
-            phone: req.body.phone,
-            photo: req.body.photo,
-            role: req.body.role,
-            address: req.body.photo,
-            fatherName: req.body.fatherName,
-            experience: req.body.experience,
-            lastSalary: req.body.lastSalary,
-            emergencyNumber: req.body.emergencyNumber,
-            emergencyContactName: req.body.emergencyContactName,
-            relationWithEmergencyContact: req.body.relationWithEmergencyContact,
-        })
-        const data = {
-            employee: {
-                id: employee.id
+        // check whether the user with this email exist already
+        try {
+            let employee = await Employee.findOne({ email: req.body.email });
+            if (employee) {
+                return res.status(409).json({ success, error: employeeExistValidation})
             }
-        }
-        //generate token
-        const authtoken = jwt.sign(data, JWT_SECRET);
-        success = true;
-        res.status(201).json({ success, authtoken })
 
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).send(internalServerError)
-    }
-})
+            const salt = await bcrypt.genSalt(10);
+            const securedPassword = await bcrypt.hash(req.body.password, salt);
+
+
+            // create a new user
+            employee = await Employee.create({
+                name: req.body.name,
+                email: req.body.email,
+                password: securedPassword,
+                phone: req.body.phone,
+                photo: req.body.photo,
+                role: req.body.role,
+                address: req.body.photo,
+                fatherName: req.body.fatherName,
+                experience: req.body.experience,
+                lastSalary: req.body.lastSalary,
+                emergencyNumber: req.body.emergencyNumber,
+                emergencyContactName: req.body.emergencyContactName,
+                relationWithEmergencyContact: req.body.relationWithEmergencyContact,
+            })
+            const data = {
+                employee: {
+                    id: employee.id
+                }
+            }
+            //generate token
+            const authtoken = jwt.sign(data, JWT_SECRET);
+            success = true;
+            res.status(201).json({ success, authtoken })
+
+        } catch (error) {
+            console.error(error.message);
+            res.status(500).send(internalServerError)
+        }
+    })
 
 
 //Route 2:  Login an employee/admin using: POST "/auth/login", Doesn't Require Auth ---No Login required
 
-router.post('/login', limiter,[
+router.post('/login', limiter,sanitizeInput ,[
     body('email', emailValidation).isEmail(),
     body('password', blankPasswordValidation).exists(),
 ], async (req, res) => {

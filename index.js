@@ -18,7 +18,7 @@ const port = process.env.port;
 app.use(express.json());
 
 //Available Routes
-// Serve Swagger UI
+
 
 app.use('/auth', require('./routes/auth'))
 
