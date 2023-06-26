@@ -7,8 +7,26 @@ var jwt = require('jsonwebtoken');
 const fetchemployee = require('../middleware/fetchEmployee');
 const {internalServerError, notAllowedError, emailValidation, nameValidation, passwordValidation, blankPasswordValidation, loginCredentialsValidation, notFoundError, employeeExistValidation, employeeDeleted} = require('../reusable/messages')
 const rateLimit = require('express-rate-limit');
-const limiter = require('../middleware/security features/rateLimiting');
+const limiter = require('../middleware/securityFeatures/rateLimiting');
 const helmet = require('helmet');
+const swaggerJSDoc = require('swagger-jsdoc');  
+const swaggerUI = require('swagger-ui-express');   
+
+const router = express.Router();
+
+
+//Swagger Configuration  
+const swaggerOptions = {  
+    swaggerDefinition: {  
+        info: {  
+            title:'Employee API',  
+            version:'1.0.0'  
+        }  
+    },  
+    apis:['api.js'],  
+}  
+const swaggerDocs = swaggerJSDoc(swaggerOptions);
+router.use('/api-docs',swaggerUI.serve,swaggerUI.setup(swaggerDocs));  
 
 
 
@@ -24,9 +42,20 @@ dotenv.config({ path: '../config.env' });
 
 const JWT_SECRET = process.env.JWT_SECRET_KEY
 
-const router = express.Router();
 
 router.use(helmet());
+
+
+/** 
+* @swagger 
+* /Employees: 
+*   Post: 
+*     description: Create an Employee 
+*     responses:  
+*       201: 
+*         description: Created  
+*   
+*/  
 
 //Route 1:  create an employee/admin using: POST "/auth/create", Require Auth --- Login required
 
@@ -85,6 +114,17 @@ router.use(helmet());
         }
     })
 
+    /** 
+* @swagger 
+* /Employees: 
+*   post: 
+*     description: Login an Employee 
+*     responses:  
+*       201: 
+*         description: Success  
+*   
+*/  
+
 
 //Route 2:  Login an employee/admin using: POST "/auth/login", Doesn't Require Auth ---No Login required
 
@@ -130,9 +170,22 @@ router.post('/login', limiter,sanitizeInput ,[
 
 })
 
+/** 
+* @swagger 
+* /Employees: 
+*   get: 
+*     description: Get all Employee 
+*     responses:  
+*       200: 
+*         description: Success  
+*   
+*/  
+
+
 //Route 3:  Get all employees using: GET "/auth/allemployees", Require Auth ---Login required
 
-router.get('/allemployees', fetchemployee, limiter, async (req, res) => {
+// router.get('/allemployees', fetchemployee, limiter, async (req, res) => {
+router.get('/allemployees', async (req, res) => {
     try {
         const employees = await Employee.find({}).select("-password"); 
         res.json(employees);
@@ -141,6 +194,17 @@ router.get('/allemployees', fetchemployee, limiter, async (req, res) => {
         res.status(500).send(internalServerError)
     }
 })
+
+/** 
+* @swagger 
+* /Employees: 
+*   delete: 
+*     description: Delete an Employee 
+*     responses:  
+*       200: 
+*         description: Success  
+*   
+*/  
 
 
 //Route 4:  Delete employee using: DELETE "/auth/deletemployee/:id", Require Auth ---Login required
@@ -165,6 +229,19 @@ router.delete('/deletemployee/:id', fetchemployee,limiter, async (req, res) => {
     }
 
 })
+
+
+/** 
+* @swagger 
+* /Employees: 
+*   put: 
+*     description:  Update an Employee 
+*     responses:  
+*       202: 
+*         description: Success  
+*   
+*/  
+
 
 //Route 5: Update and employee using: PUT "/auth/updateemployee/:id", Require Auth ---Login required
 
@@ -192,12 +269,24 @@ router.put('/updateemployee/:id', fetchemployee,limiter,async (req, res) => {
         if (!employee) { return res.status(404).send(notFoundError) }
 
         employee = await Employee.findByIdAndUpdate(req.params.id, { $set: newEmployee }, { new: true })
-        res.json(employee);
+        res.status(202).json(employee);
     } catch (error) {
         console.error(error.message);
         res.status(500).send(internalServerError)
     }
 })
+
+/** 
+* @swagger 
+* /Employees: 
+*   get: 
+*     description: Get an Employee 
+*     responses:  
+*       200: 
+*         description: Success  
+*   
+*/  
+
 
 //Route 6: Get the single employee using id: GET "/employee/:id", Require Auth ---Login required
 
