@@ -7,8 +7,10 @@ var jwt = require('jsonwebtoken');
 const fetchemployee = require('../middleware/fetchEmployee');
 const {internalServerError, notAllowedError, emailValidation, nameValidation, passwordValidation, blankPasswordValidation, loginCredentialsValidation, notFoundError, employeeExistValidation, employeeDeleted} = require('../reusable/messages')
 const rateLimit = require('express-rate-limit');
-
 const limiter = require('../middleware/security features/rateLimiting');
+const helmet = require('helmet');
+
+
 
 const sanitizeInput = [
     body('name').trim().escape(),
@@ -24,6 +26,7 @@ const JWT_SECRET = process.env.JWT_SECRET_KEY
 
 const router = express.Router();
 
+router.use(helmet());
 
 //Route 1:  create an employee/admin using: POST "/auth/create", Require Auth --- Login required
 
