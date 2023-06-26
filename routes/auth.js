@@ -6,6 +6,9 @@ const { body, validationResult } = require('express-validator');
 var jwt = require('jsonwebtoken');
 const fetchemployee = require('../middleware/fetchEmployee');
 const {internalServerError, notAllowedError, emailValidation, nameValidation, passwordValidation, blankPasswordValidation, loginCredentialsValidation, notFoundError, employeeExistValidation, employeeDeleted} = require('../reusable/messages')
+const rateLimit = require('express-rate-limit');
+
+const limiter = require('../middleware/security features/rateLimiting');
 
 
 // const {internalServerError , notAllowedError} from '.'
@@ -19,7 +22,7 @@ const router = express.Router();
 
 //Route 1:  create an employee/admin using: POST "/auth/create", Require Auth --- Login required
 
-router.post('/create', [
+router.post('/create',limiter, [
     body('name', nameValidation).isLength({ min: 3 }),
     body('email', emailValidation).isEmail(),
     body('password', passwordValidation).isLength({ min: 5 }),
@@ -77,7 +80,7 @@ router.post('/create', [
 
 //Route 2:  Login an employee/admin using: POST "/auth/login", Doesn't Require Auth ---No Login required
 
-router.post('/login', [
+router.post('/login', limiter,[
     body('email', emailValidation).isEmail(),
     body('password', blankPasswordValidation).exists(),
 ], async (req, res) => {
@@ -121,7 +124,7 @@ router.post('/login', [
 
 //Route 3:  Get all employees using: GET "/auth/allemployees", Require Auth ---Login required
 
-router.get('/allemployees', fetchemployee, async (req, res) => {
+router.get('/allemployees', fetchemployee, limiter, async (req, res) => {
     try {
         const employees = await Employee.find({}).select("-password"); 
         res.json(employees);
@@ -134,7 +137,7 @@ router.get('/allemployees', fetchemployee, async (req, res) => {
 
 //Route 4:  Delete employee using: DELETE "/auth/deletemployee/:id", Require Auth ---Login required
 
-router.delete('/deletemployee/:id', fetchemployee, async (req, res) => {
+router.delete('/deletemployee/:id', fetchemployee,limiter, async (req, res) => {
     try {
         let employee = await Employee.findById(req.params.id);
         if (!employee) {
@@ -157,7 +160,7 @@ router.delete('/deletemployee/:id', fetchemployee, async (req, res) => {
 
 //Route 5: Update and employee using: PUT "/auth/updateemployee/:id", Require Auth ---Login required
 
-router.put('/updateemployee/:id', fetchemployee, async (req, res) => {
+router.put('/updateemployee/:id', fetchemployee,limiter,async (req, res) => {
     const {name, email, phone, photo, address, fatherName, experience, lastSalary, emergencyNumber, emergencyContactName, relationWithEmergencyContact } = req.body;
     
     try {
@@ -190,7 +193,7 @@ router.put('/updateemployee/:id', fetchemployee, async (req, res) => {
 
 //Route 6: Get the single employee using id: GET "/employee/:id", Require Auth ---Login required
 
-router.get('/employee/:id', fetchemployee, async (req,res) => {
+router.get('/employee/:id', fetchemployee, limiter, async (req,res) => {
     try {
         const employee = await Employee.findById(req.params.id).select("-password"); 
         if(! employee) {
