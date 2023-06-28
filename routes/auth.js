@@ -11,6 +11,7 @@ const limiter = require('../middleware/securityFeatures/rateLimiting');
 const helmet = require('helmet');
 const swaggerJSDoc = require('swagger-jsdoc');  
 const swaggerUI = require('swagger-ui-express');   
+const superAdminVerification = require('../middleware/superAdminVerification');
 
 const router = express.Router();
 
@@ -29,68 +30,6 @@ const JWT_SECRET = process.env.JWT_SECRET_KEY
 
 
 router.use(helmet());
-
-// /**
-//  * @swagger
-//  * components:
-//  *  schema:
-//  *      Employee:
-//  *          type: Object
-//  *           required:
-//  *              -name
-//  *              -email
-//  *              -password
-//  *              -phone
-//  *              -photo
-//  *              -address
-//  *              -fatherName
-//  *              -experience
-//  *              -lastSalary
-//  *              -emergencyNumber
-//  *              -emergencyContactName
-//  *              -relationWithEmergencyContact
-//  *           properties:
-//  *               id:
-//  *                  type: string
-//  *                  description: The auto-generated id of Employee collection
-//  *               name:
-//  *                  type: string
-//  *                  description: Employee Name
-//  *               email:
-//  *                  type: string
-//  *                  description: Employee Email
-//  *               password:
-//  *                  type: string
-//  *                  description: Employee password
-//  *               phone:
-//  *                  type: string
-//  *                  description: Employee phone number
-//  *               photo:
-//  *                  type: string
-//  *                  description: Employee photo
-//  *               address:
-//  *                  type: string
-//  *                  description: Employee address
-//  *               fatherName:
-//  *                  type: string
-//  *                  description: Employee Father Name
-//  *               experience:
-//  *                  type: Number
-//  *                  description: Employee Experience
-//  *               lastSalary:
-//  *                  type: string
-//  *                  description: Employee Salary
-//  *               emergencyNumber:
-//  *                  type: string
-//  *                  description: Employee Emergency Number
-//  *               emergencyContactName:
-//  *                  type: string
-//  *                  description: Employee Emergency contact name
-//  *               relationWithEmergencyContact:
-//  *                  type: string
-//  *                  description: Employee Emergency Contact Name
-
-//  */
 
 
 /**
@@ -146,6 +85,11 @@ router.use(helmet());
  *         relationWithEmergencyContact:
  *           type: string
  *           description: Employee Emergency Contact Name
+ *   securitySchemes:
+ *     api_key:
+ *       type: apiKey
+ *       name: api_key
+ *       in: header
  */
 
 /**
@@ -156,30 +100,36 @@ router.use(helmet());
  * 
  */
 
+
+
 /**
  * @swagger
  * /auth/create:
- *  post:
- *    summary: creating an employee
- *    tags: [Auth]
- *    requestBody:
- *      required: true
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/schemas/Employee'
- *    responses:
- *      '201':
- *        description: Employee created successfully
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/Employee'
- *      '500':
- *        description: Internal server error
+ *   post:
+ *     parameters:
+ *       - name: auth-token
+ *         in: header
+ *         description: ''
+ *         required: false
+ *     summary: Creating an employee
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Employee'
+ *     responses:
+ *       '201':
+ *         description: Employee created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Employee'
+ *       '500':
+ *         description: Internal server error
  */
-
-
+  
 
 //Route 1:  create an employee/admin using: POST "/auth/create", Require Auth --- Login required
 
@@ -187,7 +137,7 @@ router.use(helmet());
         body('name', nameValidation).isLength({ min: 3 }),
         body('email', emailValidation).isEmail(),
         body('password', passwordValidation).isLength({ min: 5 }),
-    ] ,async (req, res) => {
+    ], sanitizeInput,fetchemployee, limiter ,async (req, res) => {
         let success = false;
 
         // If there are errors, return bad request and the errors
@@ -238,14 +188,11 @@ router.use(helmet());
         }
     })
 
+
+
 /**
  * @swagger
  * components:
- *   securitySchemes:
- *     ApiKeyAuth:
- *       type: apiKey
- *       in: header
- *       name: X-API-Key
  *   schemas:
  *     Employee:
  *       type: object
@@ -329,7 +276,7 @@ router.use(helmet());
 router.post('/login' ,[
     body('email', emailValidation).isEmail(),
     body('password', blankPasswordValidation).exists(),
-], async (req, res) => {
+],sanitizeInput ,limiter ,async (req, res) => {
     let success = false;
 
     // If there are errors, return bad request and the errors
@@ -367,34 +314,33 @@ router.post('/login' ,[
     }
 
 })
-
-
-
 /**
  * @swagger
  * /auth/allemployees:
- *  security:
- *   - BasicAuth: []
- *  get:
- *    summary: fetch all employee
- *    tags: [Auth]
- *    responses:
- *      '200':
- *        description: Employees loaded successfully
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/Employee'
- *      '500':
- *        description: Internal server error
+ *   get:
+ *     summary: Fetch all employees
+ *     tags: [Auth]
+ *     parameters:
+ *       - name: auth-token
+ *         in: header
+ *         description: ''
+ *         required: false
+ *     responses:
+ *       '200':
+ *         description: Employees loaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Employee'
+ *       '500':
+ *         description: Internal server error
  */
-
-
 
 //Route 3:  Get all employees using: GET "/auth/allemployees", Require Auth ---Login required
 
-// router.get('/allemployees',async (req, res) => {
-router.get('/allemployees', fetchemployee ,async (req, res) => {
+router.get('/allemployees', limiter, fetchemployee ,async (req, res) => {
+// router.get('/allemployees', limiter, superAdminVerification ,async (req, res) => {
+
     try {
         const employees = await Employee.find({}).select("-password"); 
         res.status(200).json(employees);
@@ -403,45 +349,49 @@ router.get('/allemployees', fetchemployee ,async (req, res) => {
         res.status(500).send(internalServerError)
     }
 })
+
+
 /**
  * @swagger
  * /auth/deletemployee/{id}:
- *  delete:
- *    summary: Delete employee
- *    parameters:
- *      - name: id
- *        in: path
- *        required: true
- *        schema:
- *          type: string
- *    tags: [Auth]
- *    responses:
- *      '200':
- *        description: Employee deleted successfully
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/Employee'
- *      '500':
- *        description: Internal server error
+ *   delete:
+ *     parameters:
+ *       - name: auth-token
+ *         in: header
+ *         description: ''
+ *         required: true
+ *       - name: id
+ *         in: path
+ *         required: true
+ *     summary: Delete employee
+ *     tags: [Auth]
+ *     responses:
+ *       '200':
+ *         description: Employee deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Employee'
+ *       '500':
+ *         description: Internal server error
  */
 
 
 
 //Route 4:  Delete employee using: DELETE "/auth/deletemployee/:id", Require Auth ---Login required
 
-router.delete('/deletemployee/:id',async (req, res) => {
+router.delete('/deletemployee/:id', limiter,fetchemployee,async (req, res) => {
     try {
         let employee = await Employee.findById(req.params.id);
         if (!employee) {
             return res.status(404).send(notFoundError);
         }
 
-        //Allow deletion only if employee himself want to delete
+        // Allow deletion only if employee himself want to delete
 
-        // if (employee.id !== req.employee.id) {
-        //     return res.status(401).send(notAllowedError)
-        // }
+        if (employee.id !== req.employee.id) {
+            return res.status(401).send(notAllowedError)
+        }
         employee = await Employee.findByIdAndDelete(req.params.id)
         res.status(200).json({ "Success": employeeDeleted, employee: employee });
     } catch (error) {
@@ -455,36 +405,49 @@ router.delete('/deletemployee/:id',async (req, res) => {
 /**
  * @swagger
  * /auth/updateemployee/{id}:
- *  put:
- *    summary: update employee
- *    parameters:
- *      - name: id
- *        in: path
- *        required: true
- *        schema:
- *          type: string
- *    tags: [Auth]
- *    requestBody:
- *      required: true
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/schemas/Employee'
- *    responses:
- *      '202':
- *        description: Employee update successfully
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/Employee'
- *      '500':
- *        description: Internal server error
+ *   put:
+ *     parameters:
+ *       - name: auth-token
+ *         in: header
+ *         description: ''
+ *         required: true
+ *       - name: id
+ *         in: path
+ *         required: true
+ *     summary: Update employee
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Employee'
+ *     responses:
+ *       '202':
+ *         description: Employee updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Employee'
+ *       '500':
+ *         description: Internal server error
  */
 
 
 //Route 5: Update and employee using: PUT "/auth/updateemployee/:id", Require Auth ---Login required
 
-router.put('/updateemployee/:id',async (req, res) => {
+router.put('/updateemployee/:id',[
+    body('name', nameValidation).isLength({ min: 3 }),
+    body('email', emailValidation).isEmail(),
+    body('password', passwordValidation).isLength({ min: 5 }),
+], sanitizeInput ,limiter,fetchemployee,async (req, res) => {
+    
+        // If there are errors, return bad request and the errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success, errors: errors.array() });
+        }
+
     const {name, email, phone, photo, address, fatherName, experience, lastSalary, emergencyNumber, emergencyContactName, relationWithEmergencyContact } = req.body;
     
     try {
@@ -516,32 +479,34 @@ router.put('/updateemployee/:id',async (req, res) => {
 })
 
 
-
 /**
  * @swagger
  * /auth/employee/{id}:
- *  get:
- *    summary: login an employee
- *    tags: [Auth]
- *    parameters:
- *      - name: id
- *        in: path
- *        required: true
- *    responses:
- *      '200':
- *        description: Employee login successfully
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/Employee'
- *      '500':
- *        description: Internal server error
+ *   get:
+ *     parameters:
+ *       - name: auth-token
+ *         in: header
+ *         description: ''
+ *         required: true
+ *       - name: id
+ *         in: path
+ *         required: true
+ *     summary: Get an employee
+ *     tags: [Auth]
+ *     responses:
+ *       '200':
+ *         description: Employee logged in successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Employee'
+ *       '500':
+ *         description: Internal server error
  */
-
 
 //Route 6: Get the single employee using id: GET "/employee/:id", Require Auth ---Login required
 
-router.get('/employee/:id', async (req,res) => {
+router.get('/employee/:id', limiter,fetchemployee,async (req,res) => {
     try {
         const employee = await Employee.findById(req.params.id).select("-password"); 
         if(! employee) {
