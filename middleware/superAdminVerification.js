@@ -16,7 +16,7 @@ const superAdminVerification = async (req, res, next) => {
     }
     try {
         const data = jwt.verify(token, JWT_SECRET);
-        const info =await  Employee.findOne(data.id);
+        const info =await Employee.findOne(data.id);
         console.log(info);
         req.employee = data.employee;
         next();

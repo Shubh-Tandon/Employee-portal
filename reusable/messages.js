@@ -8,6 +8,7 @@ const loginCredentialsValidation = "Please try to login with corrrect credential
 const notFoundError = "Not Found";
 const employeeExistValidation = "Employee with this email already exist";
 const employeeDeleted = "Employee has been deleted";
+const superAdminAuth = "Super Admin authorization required "
 
 
 module.exports = {
@@ -20,5 +21,6 @@ module.exports = {
   loginCredentialsValidation,
   notFoundError,
   employeeExistValidation,
-  employeeDeleted
+  employeeDeleted,
+  superAdminAuth
 };
