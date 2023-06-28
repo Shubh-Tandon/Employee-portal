@@ -110,9 +110,6 @@ router.use(helmet());
  *         - experience
  *         - lastSalary
  *       properties:
- *         id:
- *           type: string
- *           description: The auto-generated id of Employee collection
  *         name:
  *           type: string
  *           description: Employee Name
@@ -241,10 +238,14 @@ router.use(helmet());
         }
     })
 
-
 /**
  * @swagger
  * components:
+ *   securitySchemes:
+ *     ApiKeyAuth:
+ *       type: apiKey
+ *       in: header
+ *       name: X-API-Key
  *   schemas:
  *     Employee:
  *       type: object
@@ -259,9 +260,6 @@ router.use(helmet());
  *         - experience
  *         - lastSalary
  *       properties:
- *         id:
- *           type: string
- *           description: The auto-generated id of Employee collection
  *         name:
  *           type: string
  *           description: Employee Name
@@ -270,16 +268,16 @@ router.use(helmet());
  *           description: Employee Email
  *         password:
  *           type: string
- *           description: Employee password
+ *           description: Employee Password
  *         phone:
  *           type: string
- *           description: Employee phone number
+ *           description: Employee Phone Number
  *         photo:
  *           type: string
- *           description: Employee photo
+ *           description: Employee Photo
  *         address:
  *           type: string
- *           description: Employee address
+ *           description: Employee Address
  *         fatherName:
  *           type: string
  *           description: Employee Father Name
@@ -294,7 +292,7 @@ router.use(helmet());
  *           description: Employee Emergency Number
  *         emergencyContactName:
  *           type: string
- *           description: Employee Emergency contact name
+ *           description: Employee Emergency Contact Name
  *         relationWithEmergencyContact:
  *           type: string
  *           description: Employee Emergency Contact Name
@@ -375,6 +373,8 @@ router.post('/login' ,[
 /**
  * @swagger
  * /auth/allemployees:
+ *  security:
+ *   - BasicAuth: []
  *  get:
  *    summary: fetch all employee
  *    tags: [Auth]
@@ -394,7 +394,7 @@ router.post('/login' ,[
 //Route 3:  Get all employees using: GET "/auth/allemployees", Require Auth ---Login required
 
 // router.get('/allemployees',async (req, res) => {
-router.get('/allemployees', async (req, res) => {
+router.get('/allemployees', fetchemployee ,async (req, res) => {
     try {
         const employees = await Employee.find({}).select("-password"); 
         res.status(200).json(employees);
