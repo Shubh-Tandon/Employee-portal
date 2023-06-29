@@ -12,6 +12,7 @@ const helmet = require('helmet');
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUI = require('swagger-ui-express');
 const superAdminVerification = require('../middleware/superAdminVerification');
+const superAdminNSelf = require('../middleware/superAdminNSelf');
 
 const router = express.Router();
 
@@ -136,7 +137,7 @@ router.post('/create', [
     body('name', nameValidation).isLength({ min: 3 }),
     body('email', emailValidation).isEmail(),
     body('password', passwordValidation).isLength({ min: 5 }),
-], sanitizeInput, fetchemployee, limiter, async (req, res) => {
+], sanitizeInput, fetchemployee, superAdminVerification,limiter, async (req, res) => {
     let success = false;
 
     // If there are errors, return bad request and the errors
@@ -146,13 +147,7 @@ router.post('/create', [
     }
     // check whether the user with this email exist already
     try {
-        let superAdmin = await Employee.findById(req.employee.id);
-        if (!superAdmin) {
-            return res.status(404).send(notFoundError);
-        }
-        if ((superAdmin.role).toLowerCase() !== "superadmin") {
-            return res.status(401).send(superAdminAuth);
-        }
+      
         let employee = await Employee.findOne({ email: req.body.email });
         if (employee) {
             return res.status(409).json({ success, error: employeeExistValidation })
@@ -296,7 +291,6 @@ router.post('/login', [
         let employee = await Employee.findOne({ email });
         if (!employee) {
             return res.status(400).json({ error: loginCredentialsValidation });
-
         }
 
         const passwordCompare = await bcrypt.compare(password, employee.password);
@@ -346,16 +340,8 @@ router.post('/login', [
 
 //Route 3:  Get all employees using: GET "/auth/allemployees", Require Auth ---Login required
 
-router.get('/allemployees', limiter, fetchemployee, async (req, res) => {
-    // router.get('/allemployees', limiter, superAdminVerification ,async (req, res) => {
+    router.get('/allemployees', limiter, fetchemployee,superAdminVerification ,async (req, res) => {
     try {
-        let superAdmin = await Employee.findById(req.employee.id);
-        if (!superAdmin) {
-            return res.status(404).send(notFoundError);
-        }
-        if ((superAdmin.role).toLowerCase() !== "superadmin") {
-            return res.status(401).send(superAdminAuth);
-        }
         const employees = await Employee.find({}).select("-password");
         res.status(200).json(employees);
     } catch (error) {
@@ -455,7 +441,7 @@ router.put('/updateemployee/:id', sanitizeInput, limiter, fetchemployee, async (
 
 
 
-    const { name, email, phone, photo, address, fatherName, experience, lastSalary, emergencyNumber, emergencyContactName, relationWithEmergencyContact } = req.body;
+    const { name, email, phone, role , photo, address, fatherName, experience, lastSalary, emergencyNumber, emergencyContactName, relationWithEmergencyContact } = req.body;
 
     try {
         // creating a new employee object
@@ -463,6 +449,7 @@ router.put('/updateemployee/:id', sanitizeInput, limiter, fetchemployee, async (
         if (name) { newEmployee.name = name };
         if (email) { newEmployee.email = email };
         if (phone) { newEmployee.phone = phone };
+        if (role) { newEmployee.role = role };
         if (photo) { newEmployee.photo = photo };
         if (address) { newEmployee.address = address };
         if (fatherName) { newEmployee.fatherName = fatherName };
@@ -522,15 +509,11 @@ router.put('/updateemployee/:id', sanitizeInput, limiter, fetchemployee, async (
 
 //Route 6: Get the single employee using id: GET "/employee/:id", Require Auth ---Login required
 
-router.get('/employee/:id', limiter, fetchemployee, async (req, res) => {
+router.get('/employee/:id', limiter, superAdminNSelf ,async (req, res) => {
     try {
-        let superAdmin = await Employee.findById(req.employee.id);
-        if (!superAdmin) {
-            return res.status(404).send(notFoundError);
-        }
-        if ((superAdmin.role).toLowerCase() !== "superadmin") {
-            return res.status(401).send(superAdminAuth);
-        }
+
+        console.log("in auth", req.params.id)
+        
         const employee = await Employee.findById(req.params.id).select("-password");
         if (!employee) {
             return res.status(404).send(notFoundError)
