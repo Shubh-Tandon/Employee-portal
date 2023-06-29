@@ -42,6 +42,7 @@ router.use(helmet());
  *         - name
  *         - email
  *         - password
+ *         - role
  *         - phone
  *         - photo
  *         - address
@@ -58,8 +59,11 @@ router.use(helmet());
  *         password:
  *           type: string
  *           description: Employee password
- *         phone:
+ *         role:
  *           type: string
+ *           description: Employee role
+ *         phone:
+ *           type: number
  *           description: Employee phone number
  *         photo:
  *           type: string
@@ -74,10 +78,10 @@ router.use(helmet());
  *           type: number
  *           description: Employee Experience
  *         lastSalary:
- *           type: string
+ *           type: number
  *           description: Employee Salary
  *         emergencyNumber:
- *           type: string
+ *           type: number
  *           description: Employee Emergency Number
  *         emergencyContactName:
  *           type: string
@@ -85,11 +89,6 @@ router.use(helmet());
  *         relationWithEmergencyContact:
  *           type: string
  *           description: Employee Emergency Contact Name
- *   securitySchemes:
- *     api_key:
- *       type: apiKey
- *       name: api_key
- *       in: header
  */
 
 /**
@@ -297,6 +296,7 @@ router.post('/login', [
         let employee = await Employee.findOne({ email });
         if (!employee) {
             return res.status(400).json({ error: loginCredentialsValidation });
+
         }
 
         const passwordCompare = await bcrypt.compare(password, employee.password);
@@ -318,6 +318,7 @@ router.post('/login', [
     } catch (error) {
         console.error(error.message);
         res.status(500).send(internalServerError)
+
     }
 
 })

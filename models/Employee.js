@@ -20,7 +20,7 @@ const EmployeeSchema = new Schema({
     required: true
   },
   phone: {
-    type: String,
+    type: Number,
     required: true,
   },
   photo: {
@@ -40,10 +40,10 @@ const EmployeeSchema = new Schema({
     required: true,
   },
   lastSalary: {
-    type: String,
+    type: Number,
   },
   emergencyNumber: {
-    type: String,
+    type: Number,
     required: true,
   },
   emergencyContactName: {
