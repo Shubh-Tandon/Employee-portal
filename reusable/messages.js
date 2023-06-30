@@ -23,5 +23,6 @@ module.exports = {
   notFoundError,
   employeeExistValidation,
   employeeDeleted,
-  superAdminAuth
+  superAdminAuth,
+  authenticationError 
 };

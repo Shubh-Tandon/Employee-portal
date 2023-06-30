@@ -6,11 +6,8 @@ const { body, validationResult } = require('express-validator');
 var jwt = require('jsonwebtoken');
 const fetchemployee = require('../middleware/fetchEmployee');
 const { internalServerError, notAllowedError, emailValidation, nameValidation, passwordValidation, blankPasswordValidation, loginCredentialsValidation, notFoundError, employeeExistValidation, employeeDeleted, superAdminAuth } = require('../reusable/messages')
-const rateLimit = require('express-rate-limit');
 const limiter = require('../middleware/securityFeatures/rateLimiting');
 const helmet = require('helmet');
-const swaggerJSDoc = require('swagger-jsdoc');
-const swaggerUI = require('swagger-ui-express');
 const superAdminVerification = require('../middleware/superAdminVerification');
 const superAdminNSelf = require('../middleware/superAdminNSelf');
 
@@ -511,7 +508,6 @@ router.put('/updateemployee/:id', sanitizeInput, limiter, fetchemployee, async (
 
 router.get('/employee/:id', limiter, superAdminNSelf, async (req, res) => {
     try {
-
         const employee = await Employee.findById(req.params.id).select("-password");
         if (!employee) {
             return res.status(404).send(notFoundError)
