@@ -137,7 +137,7 @@ router.post('/create', [
     body('name', nameValidation).isLength({ min: 3 }),
     body('email', emailValidation).isEmail(),
     body('password', passwordValidation).isLength({ min: 5 }),
-], sanitizeInput, fetchemployee, superAdminVerification,limiter, async (req, res) => {
+], sanitizeInput, fetchemployee, superAdminVerification, limiter, async (req, res) => {
     let success = false;
 
     // If there are errors, return bad request and the errors
@@ -147,7 +147,7 @@ router.post('/create', [
     }
     // check whether the user with this email exist already
     try {
-      
+
         let employee = await Employee.findOne({ email: req.body.email });
         if (employee) {
             return res.status(409).json({ success, error: employeeExistValidation })
@@ -340,7 +340,7 @@ router.post('/login', [
 
 //Route 3:  Get all employees using: GET "/auth/allemployees", Require Auth ---Login required
 
-    router.get('/allemployees', limiter, fetchemployee,superAdminVerification ,async (req, res) => {
+router.get('/allemployees', limiter, fetchemployee, superAdminVerification, async (req, res) => {
     try {
         const employees = await Employee.find({}).select("-password");
         res.status(200).json(employees);
@@ -441,7 +441,7 @@ router.put('/updateemployee/:id', sanitizeInput, limiter, fetchemployee, async (
 
 
 
-    const { name, email, phone, role , photo, address, fatherName, experience, lastSalary, emergencyNumber, emergencyContactName, relationWithEmergencyContact } = req.body;
+    const { name, email, phone, role, photo, address, fatherName, experience, lastSalary, emergencyNumber, emergencyContactName, relationWithEmergencyContact } = req.body;
 
     try {
         // creating a new employee object
@@ -509,11 +509,9 @@ router.put('/updateemployee/:id', sanitizeInput, limiter, fetchemployee, async (
 
 //Route 6: Get the single employee using id: GET "/employee/:id", Require Auth ---Login required
 
-router.get('/employee/:id', limiter, superAdminNSelf ,async (req, res) => {
+router.get('/employee/:id', limiter, superAdminNSelf, async (req, res) => {
     try {
 
-        console.log("in auth", req.params.id)
-        
         const employee = await Employee.findById(req.params.id).select("-password");
         if (!employee) {
             return res.status(404).send(notFoundError)
