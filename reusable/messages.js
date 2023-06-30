@@ -8,7 +8,8 @@ const loginCredentialsValidation = "Please try to login with corrrect credential
 const notFoundError = "Not Found";
 const employeeExistValidation = "Employee with this email already exist";
 const employeeDeleted = "Employee has been deleted";
-const superAdminAuth = "Super Admin authorization required "
+const superAdminAuth = "Super Admin authorization required ";
+const authenticationError = "Please authenticate using a valid token";
 
 
 module.exports = {
